@@ -4,7 +4,7 @@ from app.config import HERMES_CLI_PATH, HERMES_CLI_TIMEOUT, HERMES_CLI_WORKING_D
 
 logger = logging.getLogger(__name__)
 
-async def process_with_hermes(user_input: str) -> str:
+def process_with_hermes(user_input: str) -> str:
     """
     Gọi Hermes CLI subprocess để xử lý input.
     Trả về response text từ Hermes.

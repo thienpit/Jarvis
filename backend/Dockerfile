@@ -6,22 +6,24 @@ RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy requirements và install
-COPY backend/requirements.txt .
+# Build context là backend/, nên COPY path là relative đến backend/
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy ứng dụng
-COPY backend/app ./app
-COPY backend/run.sh .
+COPY app ./app
+COPY run.sh .
 RUN chmod +x run.sh
 
 # Tạo thư mục audio tạm
 RUN mkdir -p /tmp/audio
 
-# Export env vars
+# Export env vars mặc định
 ENV HERMES_CLI_PATH=/app/hermes_agent/hermes_cli/main.py
 ENV HERMES_CLI_TIMEOUT=30
 ENV HERMES_CLI_WORKING_DIR=/app
 ENV AUDIO_OUTPUT_DIR=/tmp/audio
+ENV PORT=8000
 
 EXPOSE 8000
 
