@@ -1,0 +1,32 @@
+cụ thể: rewrite với function có parameter và gọi call
+
+
+Rewrite this whole function to be as simple and clear as possible, while maintaining the existing functionality.
+
+This function calculates MEX of n numbers based on the number of set bits:
+For each element x, compute k = popcount(x) (number of set bits).
+If the current MEX is < k, set MEX = k.
+If the current MEX == k, increment MEX by 1 (moving to the next multiple of 2^0).
+
+The starting value of MEX should be 0.
+
+Implement the function in Python, making it as simple and clear as possible.
+
+Rewrite the whole function from scratch.
+
+Original:
+```python
+def calculate_mex(n: int, a: list[int]) -> int:
+    # Step 1: Convert each element to its popcount (number of set bits)
+    ks = [bin(x).count('1') for x in a]
+
+    mex = 0
+    for k in ks:
+        if mex < k:
+            mex = k
+        elif mex == k:
+            mex += 1
+    return mex
+```
+
+Rewrite this `calculate_mex` function to meet the requirements.
