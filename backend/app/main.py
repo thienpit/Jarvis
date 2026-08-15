@@ -35,7 +35,8 @@ async def health():
 async def process_request(request: ProcessRequest):
     logger.info(f"Processing request: {request.text[:50]}...")
     
-    response_text = await process_with_hermes(request.text)
+    # 1. Xử lý qua Hermes CLI (đồng bộ — không await)
+    response_text = process_with_hermes(request.text)
     
     audio_base64 = ""
     try:
