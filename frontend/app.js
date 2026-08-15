@@ -1,5 +1,5 @@
 // Cấu hình API URL — sửa lại khi deploy
-const API_URL = 'https://jarvis-backend.onrender.com';
+const API_URL = 'https://jarvis-73ty.onrender.com';
 
 const chatBox = document.getElementById('chatBox');
 const micBtn = document.getElementById('micBtn');
@@ -31,35 +31,31 @@ if (SpeechRecognition) {
         status.textContent = '⏳ Jarvis đang xử lý...';
         status.style.color = '#00d4ff';
         
-        fetch(`${API_URL}/api/process`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: transcript })
-        })
-        .then(res => res.json())
-        .then(data => {
-            addMessage('jarvis', data.response);
-            status.textContent = '🔊 Jarvis nói đáp ứng...';
-            
-            if (data.audio_base64) {
-                const audio = new Audio(`data:audio/mp3;base64,${data.audio_base64}`);
-                audio.play();
-                status.textContent = '🔊 Jarvis đang nói...';
-            } else {
-                status.textContent = '✅ Xong. Bạn nói tiếp nhé';
-                status.style.color = '#aaa';
-            }
-        })
-        .catch(err => {
-            console.error('Lỗi:', err);
-            addMessage('jarvis', 'Xin lỗi, Jarvis gặp sự cố. Bạn thử lại nhé.');
-            status.textContent = '❌ Có lỗi xảy ra';
-            status.style.color = '#ff4444';
-        })
-        .finally(() => {
-            isListening = false;
-            micBtn.classList.remove('listening');
-        });
+        // Gọi backend với retry + timeout
+        callBackend(transcript)
+            .then(data => {
+                addMessage('jarvis', data.response);
+                status.textContent = '🔊 Jarvis nói đáp ứng...';
+                
+                if (data.audio_base64) {
+                    const audio = new Audio(`data:audio/mp3;base64,${data.audio_base64}`);
+                    audio.play();
+                    status.textContent = '🔊 Jarvis đang nói...';
+                } else {
+                    status.textContent = '✅ Xong. Bạn nói tiếp nhé';
+                    status.style.color = '#aaa';
+                }
+            })
+            .catch(err => {
+                console.error('Lỗi:', err);
+                addMessage('jarvis', 'Xin lỗi, Jarvis gặp sự cố. Bạn thử lại nhé.');
+                status.textContent = '❌ Có lỗi xảy ra';
+                status.style.color = '#ff4444';
+            })
+            .finally(() => {
+                isListening = false;
+                micBtn.classList.remove('listening');
+            });
     };
     
     recognition.onerror = (event) => {
@@ -91,6 +87,29 @@ function addMessage(type, text) {
     div.textContent = text;
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Hàm gọi backend với retry + timeout
+async function callBackend(text) {
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const res = await fetch(`${API_URL}/api/process`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text }),
+                signal: AbortSignal.timeout(30000) // 30 giây timeout
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.json();
+        } catch (err) {
+            console.warn(`Lần ${i+1}/${maxRetries} lỗi: ${err.message}`);
+            if (i < maxRetries - 1) {
+                await new Promise(r => setTimeout(r, 1000)); // đợi 1s rồi retry
+            }
+        }
+    }
+    throw new Error('Backend không phản hồi sau nhiều lần thử');
 }
 
 micBtn.addEventListener('click', () => {
